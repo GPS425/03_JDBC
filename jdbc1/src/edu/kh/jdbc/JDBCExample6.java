@@ -65,14 +65,13 @@ public class JDBCExample6 {
 			e.printStackTrace();
 		} finally {
 			try {
-				if(sc != null) sc.close();
 				if(pstmt != null) pstmt.close();
 				if(conn != null) conn.close();
+				
+				if(sc != null) sc.close();
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
 		}
-
 	}
-
 }
