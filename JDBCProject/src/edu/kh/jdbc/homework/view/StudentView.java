@@ -52,7 +52,6 @@ public class StudentView {
 
 
 			} catch (InputMismatchException e) {
-				// 스캐너를 이용한 입력 시 자료형이 잘못된 경우
 				System.out.println("\n***잘못 입력하셨습니다***\n");
 
 				input = -1;
