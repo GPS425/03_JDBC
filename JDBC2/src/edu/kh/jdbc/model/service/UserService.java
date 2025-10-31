@@ -85,11 +85,6 @@ public class UserService {
 		return user;
 	}
 	
-	/**
-	 * 5. User 삭제 서비스
-	 * @param userNo : 삭제할 User 번호
-	 * @return delete 결과 행의 개수
-	 */
 	public int deleteUser(int userNo) throws Exception {
 		
 		Connection conn = JDBCTemplate.getConnection();
@@ -106,5 +101,86 @@ public class UserService {
 		
 		return result;
 	}
+
+	/** 6-1 ) 입력받은 ID, PW가 일치하는 회원이 존재하는지 조회(SELECT)
+	 * @param user
+	 * @return
+	 */
+	public int selectUserNo(String id, String pw) throws Exception{
+		Connection conn = JDBCTemplate.getConnection();
+		
+		int userNo = dao.selectUser(conn, id, pw);
+		
+		JDBCTemplate.close(conn);
+		
+		return userNo;
+	}
+
+	/** 6-2) USER_NO가 일치하는 회원의 이름 수정 서비스(UPDATE)
+	 * @param name
+	 * @param userNo
+	 * @return
+	 */
+	public int updateName(String name, int userNo) throws Exception {
+		
+		Connection conn = JDBCTemplate.getConnection();
+		
+		int result = dao.updateName(conn, name, userNo);
+		
+		if(result > 0) JDBCTemplate.commit(conn);
+		else		   JDBCTemplate.rollback(conn);
+		
+		JDBCTemplate.close(conn);
+		
+		return result;
+	}
+
+	/** 7. 아이디 중복 확인 서비스
+	 * @param userId
+	 * @return
+	 */
+	public int idCheck(String userId) throws Exception{
+		
+		Connection conn = JDBCTemplate.getConnection();
+		
+		int count = dao.idCheck(conn, userId);
+		
+		JDBCTemplate.close(conn);
+		
+		return count;
+	}
+
+	/** userList에 있는 모든 User 객체를 INSERT하는 서비스
+	 * @param userList
+	 * @return
+	 */
+	public int multiInsertUser(List<User> userList) throws Exception {
+		
+		// 다중 INSERT 방법
+		// 1) SQL을 이용한 다중 INSERT
+		// 2) Java 반복문을 이용한 다중 INSERT(이거 사용함)
+		
+		Connection conn = JDBCTemplate.getConnection();
+		
+		int count = 0;
+		
+		for(User user : userList) {
+			int result = dao.insertUser(conn, user);
+			count += result;	// 삽입 성공한 행의 갯수를 count 누적
+		}
+		
+		// 전체 삽입 성공 시에만 commit, 아니면 rollback
+		
+		if(count == userList.size()) {
+			JDBCTemplate.commit(conn);
+		} else {
+			JDBCTemplate.rollback(conn);
+		}
+		
+		JDBCTemplate.close(conn);
+		return count;
+	}
+	
+	
 
 }

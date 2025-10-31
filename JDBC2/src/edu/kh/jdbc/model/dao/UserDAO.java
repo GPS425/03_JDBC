@@ -24,6 +24,7 @@ public class UserDAO {
 	private PreparedStatement pstmt = null;
 	private ResultSet rs = null;
 
+	
 	/**
 	 * 1. User 등록 DAO
 	 * 
@@ -227,6 +228,114 @@ public class UserDAO {
 		}
 
 		return result;		
+	}
+
+	
+
+	/** 6-1) ID, PW가 일치하는 회원의 USER_NO 조회 DAO
+	 * @param conn
+	 * @param id
+	 * @param pw
+	 * @return
+	 * @throws Exception
+	 */
+	public int selectUser(Connection conn, String id, String pw) throws Exception{
+		
+		int userNo = 0;
+		
+		try {
+			String sql = """
+					SELECT USER_NO
+					FROM TB_USER
+					WHERE USER_ID = ?
+					AND USER_PW = ?
+					""";
+			
+			pstmt = conn.prepareStatement(sql);
+			
+			pstmt.setString(1, id);
+			pstmt.setString(2, pw);
+			
+			rs = pstmt.executeQuery();
+			
+			// 조회된 행이 1개가 있을 경우
+			if(rs.next()) {
+				userNo = rs.getInt("USER_NO");
+			}
+			
+			
+		} finally {
+			close(rs);
+			close(pstmt);
+		}
+		return userNo;	// 조회 성공 USER_NO, 조회 실패 0
+	}
+
+	/* 6-2) USER_NO가 일치하는 회원의 이름 수정 DAO
+	 * @param conn
+	 * @param name
+	 * @param userNo
+	 * @return
+	 * @throws Exception
+	 */
+	public int updateName(Connection conn, String name, int userNo) throws Exception {
+		int result = 0;
+		
+		try {
+			
+			String sql = """
+					UPDATE TB_USER
+					SET USER_NAME = ?
+					WHERE USER_NO = ?
+					""";
+			
+			pstmt = conn.prepareStatement(sql);
+			
+			pstmt.setString(1, name);
+			pstmt.setInt(2, userNo);
+			
+			result = pstmt.executeUpdate();
+			
+			
+		} finally {
+			close(pstmt);
+		}
+		
+		return result;
+	}
+
+	/** 7. ID 중복 검사 DAO
+	 * @param conn
+	 * @param userId
+	 * @return
+	 */
+	public int idCheck(Connection conn, String userId) throws Exception {
+		
+		int count = 0;
+		
+		try {
+			String sql = """
+						SELECT COUNT(*)
+						FROM TB_USER
+						WHERE USER_ID = ? 
+						""";
+			pstmt = conn.prepareStatement(sql);
+			
+			pstmt.setString(1, userId);
+
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				count = rs.getInt(1);	// 조회된 컬럼 순서 번호를 이용해 컬럼 값 얻어오기
+				
+			}
+			
+		} finally {
+			close(rs);
+			close(pstmt);
+		}
+		
+		return count;
 	}
 	
 	

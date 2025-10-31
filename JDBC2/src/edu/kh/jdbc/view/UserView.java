@@ -1,5 +1,6 @@
 package edu.kh.jdbc.view;
 
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -182,10 +183,14 @@ public class UserView {
 		
 		User user = service.selectUser(userNo); 
 		
+		// service 호출 후 결과 반환받기
+		// USER_NO(PK) == 중복 불가능, 일치하는 사용자가 있으면 1행만 조회됨
+		// 1 행의 조회 결과를 담기 위해서 User DTO 사용
+		
 		if (user != null) {
 			System.out.println(user); 
 		} else {
-			System.out.println("\nUSER_NO " + userNo + "번과 일치하는 회원 없음.\n");
+			System.out.println("\nUSER_NO가 일치하는 회원 없음.\n");
 		}
 		
 	}
@@ -213,19 +218,146 @@ public class UserView {
 	}
 
 
-	/** 6. 
+	/** 6. USER_ID, USER_PW를 입력받아 (SELECT) 일치하면 이름 수정(UPDATE)
 	 * 
+	 * -- 
 	 */
-	private void updateName() {
+	private void updateName() throws Exception{
 		System.out.println("\n==== 6. ID, PW가 일치하는 회원이 있을 경우 이름 수정 ====\n");
+		
+		System.out.print("ID 입력 : ");
+		String id = sc.next();
+		
+		System.out.print("PW 입력 : ");
+		String pw = sc.next();
+		
+		// 입력받은 ID, PW가 일치하는 회원이 존재하는지 조회(SELECT)
+		// >> 수정할 때 필요한 데이터 USER_NO 조회해오기
+		int userNo = service.selectUserNo(id,pw);
+		
+		// 조회 결과가 없다면
+		if(userNo == 0) {
+			System.out.println("아이디, 비밀번호가 일치하는 사용자가 없음");
+			return;
+		}
+		
+		// 조회 결과 있을 때
+		System.out.print("수정할 이름 입력 : ");
+		String name = sc.next();
+		
+		// 위에서 조회된 회원(userNo)의 이름을 수정
+		// 서비스 호출(UPDATE) 후 결과 반환(int) 받기
+		int result = service.updateName(name, userNo);
+		
+		if(result > 0) System.out.println("수정 성공!");
+		else		   System.out.println("수정 실패...");
 	}
 	
-	private void insertUser2() {
+	/** 7. User등록 (아이디 중복 검사)
+	 * 
+	 */
+	private void insertUser2() throws Exception{
 		
+		System.out.println("\n==== 7. User 등록(아이디 중복 검사) ====\n");
+		
+		String userId = null;	// 입력된 아이디를 저장할 변수
+		
+		while(true) {
+			
+			System.out.print("ID : ");
+			userId = sc.next();
+			
+			// 입력받은 userId가 중복인지 검사하는
+			// 서비스 호출 후 결과 반환받기 (int, 중복 == 1, 아니면 == 0) 반환 받기
+			int count = service.idCheck(userId);
+			
+			if(count == 0) {			// 사용 가능한 아이디일 때
+				System.out.println("사용 가능한 아이디입니다.");
+				break;
+			}		
+			System.out.println("이미 사용중인 아이디입니다. 다시 입력하세요. ");
+		}
+		
+		// pw, name 입력 받기
+		System.out.print("PW : ");
+		String userPw = sc.next();
+		
+		System.out.print("Name : ");
+		String userName = sc.next();
+		
+		// 입력받은 값 3개를 한 번에 묶어서 전달할 수 있도록
+		// User DTO객체를 생성한 후 필드에 값 세팅
+		User user = new User();
+		user.setUserId(userId);
+		user.setUserPw(userPw);
+		user.setUserName(userName);
+		
+		// 서비스 호출 후 결과 반환 받기
+		int result = service.insertUser(user);
+		
+		if(result > 0) {
+			System.out.println("\n" + userId + "사용자가 등록되었습니다.\n");
+		} else {
+			System.out.println("\n***등록 실패***\n");
+		}
 	}
 
 	
-	private void multiInsertUser() {
+	/** 8. 여러 유저 등록하기
+	 * 
+	 */
+	private void multiInsertUser() throws Exception{
+		System.out.println("\n==== 8. 여러 User 등록하기 ====\n");
+		
+		System.out.print("등록할 User 수 : ");
+		int input = sc.nextInt();
+		sc.nextLine();
+		
+		// 입력받은 회원 정보를 저장할 List 객체 생성
+		List<User> userList = new ArrayList<User>();
+		
+		for(int i = 0; i < input; i++) {
+			String userId = null;	// 입력된 아이디를 저장할 변수
+			
+			while(true) {
+				System.out.print((i+1) + "번째 ID : ");
+				userId = sc.next();
+				
+				int count = service.idCheck(userId);
+				
+				if(count == 0) {
+					System.out.println("사용 가능한 아이디입니다.");
+					break;
+				}		
+				System.out.println("이미 사용중인 아이디입니다. 다시 입력하세요. ");
+			}
+			
+			System.out.print((i+1) + "번째 PW : ");
+			String userPw = sc.next();
+			
+			System.out.print((i+1) + "번째 Name : ");
+			String userName = sc.next();
+			
+			User user = new User();
+			user.setUserId(userId);
+			user.setUserPw(userPw);
+			user.setUserName(userName);
+			
+			// userList에 user 추가
+			userList.add(user);
+			
+		}
+		
+		// 입력받은 모든 사용자를 insert하는 서비스 호출
+		// >> 결과로 삽입된 행의 개수를 반환
+		
+		int result = service.multiInsertUser(userList);
+		
+		if(result == userList.size()) {
+			System.out.println("전체 삽입 성공");
+		} else {
+			System.out.println("삽입 실패");
+		}
 		
 	}
 
